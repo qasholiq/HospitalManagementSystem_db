@@ -1,0 +1,161 @@
+import java.sql.*;
+import java.time.LocalDate;
+
+public class Main {
+
+    static final String DB_URL = "jdbc:postgresql://localhost:5432/HospitalManagementSystem_db";
+    static final String USER = "postgres";
+    static final String PASS = "1234";  // Replace with your PostgreSQL password
+
+    public static void main(String[] args) {
+        try (Connection conn = DriverManager.getConnection(DB_URL, USER, PASS)) {
+            if (conn != null) {
+                System.out.println("Database connection successful!");
+
+                // Inserting data for Patients
+                addPatient(conn, "John", "Doe", "1985-03-15", "123 Main St, Anytown", "555-1234");
+                addPatient(conn, "Jane", "Smith", "1992-11-20", "456 Oak Ave, Anytown", "555-5678");
+                addPatient(conn, "Robert", "Brown", "1978-07-01", "789 Pine Ln, Anytown", "555-9012");
+                addPatient(conn, "Emily", "White", "2000-01-25", "101 Maple Dr, Anytown", "555-3456");
+                addPatient(conn, "Michael", "Green", "1995-09-10", "202 Cedar Rd, Anytown", "555-6789");
+
+                // Inserting data for Doctors
+                addDoctor(conn, "Dr. Alice", "Johnson", "Cardiology", "555-4321");
+                addDoctor(conn, "Dr. David", "Lee", "Neurology", "555-8765");
+                addDoctor(conn, "Dr. Sarah", "Miller", "Oncology", "555-2109");
+                addDoctor(conn, "Dr. James", "Wilson", "Pediatrics", "555-6543");
+                addDoctor(conn, "Dr. Laura", "Taylor", "Dermatology", "555-9876");
+
+                // Inserting data for Hospitals
+                addHospital(conn, "City General Hospital", "100 Hospital St, Anytown", "555-1111");
+                addHospital(conn, "County Medical Center", "200 Medical Dr, Anytown", "555-2222");
+                addHospital(conn, "St. Luke's Hospital", "300 Main Rd, Anytown", "555-3333");
+                addHospital(conn, "Community Health Clinic", "400 Clinic Ave, Anytown", "555-4444");
+                addHospital(conn, "Regional Trauma Center", "500 Trauma Ln, Anytown", "555-5555");
+
+                // Reading data
+                viewHospitals(conn);
+                viewDoctors(conn);
+                viewPatients(conn);
+
+
+                //Updating data
+                updatePatientPhoneNumber(conn, 1, "555-0000");
+
+
+                // Deleting data
+                deleteHospital(conn, 2);
+
+                // Verifying deletions
+                viewHospitals(conn);
+                viewDoctors(conn);
+                viewPatients(conn);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+    // ------------------- Methods for Hospital -------------------
+    public static void addHospital(Connection conn, String hospitalName, String address, String phoneNumber) throws SQLException {
+        String sql = "INSERT INTO Hospitals (hospitalName, address, phoneNumber) VALUES (?, ?, ?)";
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, hospitalName);
+            pstmt.setString(2, address);
+            pstmt.setString(3, phoneNumber);
+            pstmt.executeUpdate();
+            System.out.println("Hospital added: " + hospitalName);
+        }
+    }
+
+    public static void viewHospitals(Connection conn) throws SQLException {
+        String sql = "SELECT * FROM Hospitals";
+        try (Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            System.out.println("\nHospitals list:");
+            while (rs.next()) {
+                System.out.printf("ID: %d, Name: %s, Address: %s, Phone: %s%n",
+                        rs.getInt("hospitalID"), rs.getString("hospitalName"),
+                        rs.getString("address"), rs.getString("phoneNumber"));
+            }
+        }
+    }
+
+    public static void deleteHospital(Connection conn, int hospitalId) throws SQLException {
+        String sql = "DELETE FROM Hospitals WHERE hospitalID = ?";
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setInt(1, hospitalId);
+            pstmt.executeUpdate();
+            System.out.println("Hospital deleted with ID: " + hospitalId);
+        }
+    }
+
+    // ------------------- Methods for Doctor -------------------
+    public static void addDoctor(Connection conn, String firstName, String lastName, String specialization, String contactNumber) throws SQLException {
+        String sql = "INSERT INTO Doctors (firstName, lastName, specialization, contactNumber) VALUES (?, ?, ?, ?)";
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, firstName);
+            pstmt.setString(2, lastName);
+            pstmt.setString(3, specialization);
+            pstmt.setString(4, contactNumber);
+            pstmt.executeUpdate();
+            System.out.println("Doctor added: " + firstName + " " + lastName);
+
+        }
+    }
+
+
+    public static void viewDoctors(Connection conn) throws SQLException {
+        String sql = "SELECT * FROM Doctors";
+        try (Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            System.out.println("\nDoctors list:");
+            while (rs.next()) {
+                System.out.printf("ID: %d, Name: %s %s, Specialization: %s, Contact number: %s%n",
+                        rs.getInt("doctorID"), rs.getString("firstName"), rs.getString("lastName"),
+                        rs.getString("specialization"), rs.getString("contactNumber"));
+            }
+        }
+    }
+
+
+
+    // ------------------- Methods for Patient -------------------
+
+    public static void addPatient(Connection conn, String firstName, String lastName, String dateOfBirth, String address, String phoneNumber) throws SQLException {
+        String sql = "INSERT INTO Patients (firstName, lastName, dateOfBirth, address, phoneNumber) VALUES (?, ?, ?, ?, ?)";
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, firstName);
+            pstmt.setString(2, lastName);
+            pstmt.setObject(3, LocalDate.parse(dateOfBirth));
+            pstmt.setString(4, address);
+            pstmt.setString(5, phoneNumber);
+            pstmt.executeUpdate();
+            System.out.println("Patient added: " + firstName + " " + lastName);
+        }
+    }
+
+    public static void viewPatients(Connection conn) throws SQLException {
+        String sql = "SELECT * FROM Patients";
+        try (Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            System.out.println("\nPatients list:");
+            while (rs.next()) {
+                System.out.printf("ID: %d, Name: %s %s, Date of Birth: %s, Address: %s, Phone: %s%n",
+                        rs.getInt("patientID"), rs.getString("firstName"),
+                        rs.getString("lastName"), rs.getString("dateOfBirth"),
+                        rs.getString("address"), rs.getString("phoneNumber"));
+            }
+        }
+    }
+
+
+    public static void updatePatientPhoneNumber(Connection conn, int patientId, String phoneNumber) throws SQLException {
+        String sql = "UPDATE Patients SET phoneNumber = ? WHERE patientID = ?";
+        try (PreparedStatement pstmt = conn.prepareStatement(sql)) {
+            pstmt.setString(1, phoneNumber);
+            pstmt.setInt(2, patientId);
+            pstmt.executeUpdate();
+            System.out.println("Patient phone number updated for ID: " + patientId);
+        }
+    }
+}
